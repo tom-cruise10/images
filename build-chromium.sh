@@ -1,7 +1,7 @@
 #!/bin/bash
 
-VERSION=${1:-101.0.4951.64-0ubuntu0.18.04.1}
-TAG=${2:-chromium_101.0}
+VERSION=${1:-146.0.7680.153-0ubuntu0.18.04.1}
+TAG=${2:-chromium_146.0}
 BASE_TAG=${3:-7.3.6}
 
 # Cleanup stuff

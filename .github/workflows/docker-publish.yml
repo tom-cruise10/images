@@ -1,0 +1,52 @@
+name: Publish Docker Image
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Golang
+        uses: actions/setup-go@v4
+        with:
+          go-version: ~1.22.2
+
+      - name: Build images binary
+        run: |
+          go install github.com/markbates/pkger/cmd/pkger@latest
+          go generate github.com/aerokube/images
+          go build
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Chromium Image
+        run: |
+          # build-chromium.sh creates 'selenoid/vnc:chromium_146.0' by default
+          ./build-chromium.sh
+
+      - name: Tag and Push Images
+        run: |
+          # Convert repository owner to lowercase for Docker image tag
+          OWNER_LC=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          IMAGE_NAME="ghcr.io/$OWNER_LC/vnc"
+          
+          docker tag selenoid/vnc:chromium_146.0 $IMAGE_NAME:chromium_146.0
+          docker tag selenoid/vnc:chromium_146.0 $IMAGE_NAME:latest
+          
+          docker push $IMAGE_NAME:chromium_146.0
+          docker push $IMAGE_NAME:latest
